@@ -1,4 +1,4 @@
-import { Client, Embed } from "./deps.ts";
+import { Client } from "./deps.ts";
 import { TOKEN } from "./config.ts";
 import { runWithDeno } from "./runner.ts";
 
@@ -37,12 +37,12 @@ client.slash.handle("Run with Deno", async (d) => {
   const time = performance.now() - now;
 
   return d.editResponse(
-    `**Time taken:** ${time.toFixed(2)}ms\n**Exit Code:** ${result.code}${
+    `**Executed in \`${time.toFixed(2)}ms\`**\n**Exit Code:** ${result.code}${
       result.error
         ? `\n**Error:** ${result.error}`
         : `${
           !result.stdout && !result.stderr
-            ? "\nNo output."
+            ? ""
             : `${
               result.stdout
                 ? `\n**Stdout:**\n${"```"}\n${result.stdout}${"```"}`
@@ -56,6 +56,8 @@ client.slash.handle("Run with Deno", async (d) => {
     }`,
   );
 }, "MESSAGE");
+
+client.slash.on("interactionError", console.error);
 
 client.connect().then(() => {
   console.log("Connected as", client.user?.tag + "!");

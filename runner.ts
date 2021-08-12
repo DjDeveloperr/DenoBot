@@ -3,6 +3,7 @@ import { ansiRegex as _regex } from "./deps.ts";
 const regex = _regex();
 const clean = (str: string) => str.replace(regex, "");
 const decoder = new TextDecoder();
+const encoder = new TextEncoder();
 const CHECK_REGEX = /^Check (\w|\d| |_|-|\.|\||\$|\.)*\n/g;
 
 export interface RunResult {
@@ -20,26 +21,27 @@ export async function runWithDeno(
     return { code: "Error", error: "Imports are not allowed" };
   }
 
-  const name = crypto.randomUUID() + "." + lang;
   const result: RunResult = {
     code: "Unknown",
   };
 
   try {
-    await Deno.writeTextFile(`./scripts/${name}`, code);
-
     const proc = Deno.run({
       cmd: [
         "deno",
         "run",
         "--no-check",
-        "--v8-flags=--max-old-space-size=20",
-        `./scripts/${name}`,
+        "--allow-hrtime",
+        "--v8-flags=--max-heap-size=20",
+        "-",
       ],
-      stdin: "null",
+      stdin: "piped",
       stderr: "piped",
       stdout: "piped",
     });
+
+    await proc.stdin.write(encoder.encode(code));
+    proc.stdin.close();
 
     let returned = false;
     let forceKilled = false;
@@ -60,7 +62,6 @@ export async function runWithDeno(
     result.code = statusCode;
 
     if (forceKilled) {
-      await Deno.remove(`./scripts/${name}`).catch(() => {});
       return result;
     }
 
@@ -81,6 +82,5 @@ export async function runWithDeno(
     result.error = Deno.inspect(e);
   }
 
-  await Deno.remove(`./scripts/${name}`).catch(() => {});
   return result;
 }

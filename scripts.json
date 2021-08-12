@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": {
-      "cmd": "deno run --allow-net --allow-run=deno --allow-write=./scripts mod.ts",
+      "cmd": "deno run --no-check --allow-net --allow-run=deno mod.ts",
       "desc": "Starts the Bot"
     }
   }
